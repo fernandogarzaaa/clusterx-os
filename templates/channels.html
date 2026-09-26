@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} - Channels{% endblock %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-2">Channels</h1>
+<p class="text-sm text-stone-500 mb-6">How the agent's outbound messages reach leads. The simulator always works; the others need credentials.</p>
+<div class="space-y-4 mb-8">
+  {% for a in adapters %}
+  <div class="bg-white rounded-xl border border-stone-200 p-5">
+    <div class="flex items-center justify-between mb-1">
+      <h2 class="font-semibold capitalize">{{ a.name }}</h2>
+      {% if a.configured %}
+      <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">configured</span>
+      {% else %}
+      <span class="text-xs px-2 py-1 rounded-full bg-stone-200 text-stone-600">not configured</span>
+      {% endif %}
+    </div>
+    <div class="text-sm text-stone-600 mb-1">{{ a.description }}</div>
+    {% if a.detail %}<div class="text-xs text-stone-500">{{ a.detail }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+<div class="bg-white rounded-xl border border-stone-200 p-5">
+  <h2 class="font-semibold mb-3">Configuration guide</h2>
+  <div class="text-sm space-y-3 text-stone-700">
+    <div>
+      <div class="font-medium">Simulator (default)</div>
+      <div>No setup. Messages appear in the lead thread inside this app. Set <code class="bg-stone-100 px-1 rounded">OUTBOUND_CHANNEL=simulator</code> (the default) to keep it.</div>
+    </div>
+    <div>
+      <div class="font-medium">Twilio (SMS / WhatsApp)</div>
+      <div>Set <code class="bg-stone-100 px-1 rounded">TWILIO_ACCOUNT_SID</code>, <code class="bg-stone-100 px-1 rounded">TWILIO_AUTH_TOKEN</code> and <code class="bg-stone-100 px-1 rounded">TWILIO_FROM</code> (your Twilio number, or a <code class="bg-stone-100 px-1 rounded">whatsapp:+1415...</code> sender for WhatsApp). The adapter POSTs to <code class="bg-stone-100 px-1 rounded">api.twilio.com/2010-04-01/Accounts/.../Messages.json</code> with HTTP basic auth. Without these, every send raises a clear ConfigurationError instead of failing silently.</div>
+    </div>
+    <div>
+      <div class="font-medium">WhatsApp Cloud API</div>
+      <div>Set <code class="bg-stone-100 px-1 rounded">WHATSAPP_TOKEN</code> (a Meta system-user access token) and <code class="bg-stone-100 px-1 rounded">WHATSAPP_PHONE_NUMBER_ID</code>. The adapter POSTs to <code class="bg-stone-100 px-1 rounded">graph.facebook.com/v21.0/&lt;phone-id&gt;/messages</code> with a Bearer token. Note: template messages are required outside the 24-hour customer-service window; plain-text sends work inside it.</div>
+    </div>
+    <div>
+      <div class="font-medium">Inbound webhook</div>
+      <div>External systems can create leads via <code class="bg-stone-100 px-1 rounded">POST /api/webhooks/leads</code> with header <code class="bg-stone-100 px-1 rounded">X-API-Key</code>. The key is <code class="bg-stone-100 px-1 rounded">WEBHOOK_API_KEY</code> (default <code class="bg-stone-100 px-1 rounded">dev-webhook-key</code>, change it in production).</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

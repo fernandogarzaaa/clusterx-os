@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} - Campaigns{% endblock %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">Campaigns</h1>
+  <button onclick="document.getElementById('new-campaign').classList.toggle('hidden')" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">New campaign</button>
+</div>
+<div id="new-campaign" class="hidden bg-white rounded-xl border border-stone-200 p-5 mb-6">
+  <h2 class="font-semibold mb-3">New follow-up campaign</h2>
+  <input id="c-name" class="w-full border rounded-lg px-3 py-2 mb-2 text-sm" placeholder="Campaign name">
+  <textarea id="c-template" class="w-full border rounded-lg px-3 py-2 mb-2 text-sm" rows="3" placeholder="Message template. Use {name} and {company}."></textarea>
+  <div class="flex gap-2 items-center">
+    <label class="text-sm text-stone-500">Follow up after (hours)</label>
+    <input id="c-hours" type="number" value="24" min="1" class="border rounded-lg px-3 py-2 text-sm w-24">
+    <button onclick="createCampaign()" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">Create</button>
+  </div>
+</div>
+{% for c in campaigns %}
+<div class="bg-white rounded-xl border border-stone-200 p-5 mb-4">
+  <div class="flex items-center justify-between mb-2">
+    <div>
+      <h2 class="font-semibold">{{ c.name }}</h2>
+      <div class="text-xs text-stone-500">Follow up after {{ c.followup_hours }}h of silence &middot; {{ "active" if c.active else "paused" }} &middot; {{ enrolled_by_campaign.get(c.id, [])|length }} enrolled</div>
+    </div>
+    <button onclick="runNow({{ c.id }})" class="px-3 py-1 border border-stone-300 rounded-lg text-sm">Run now</button>
+  </div>
+  <div class="text-sm bg-stone-50 rounded-lg p-3 mb-3">{{ c.template_text }}</div>
+  <div class="text-sm mb-2 font-medium">Enrolled leads</div>
+  <div class="flex flex-wrap gap-2 mb-3 text-sm">
+    {% for e in enrolled_by_campaign.get(c.id, []) %}
+    <a href="/leads/{{ e.lead_id }}" class="px-2 py-1 bg-stone-100 rounded">{{ lead_names.get(e.lead_id, e.lead_id) }}</a>
+    {% else %}
+    <span class="text-stone-400">None yet.</span>
+    {% endfor %}
+  </div>
+  <div class="flex gap-2">
+    <select id="enroll-{{ c.id }}" class="border rounded-lg px-3 py-1 text-sm">
+      {% for l in leads %}<option value="{{ l.id }}">{{ l.name or l.email }}</option>{% endfor %}
+    </select>
+    <button onclick="enroll({{ c.id }})" class="px-3 py-1 border border-stone-300 rounded-lg text-sm">Enroll lead</button>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}
+{% block scripts %}
+<script>
+async function createCampaign() {
+  const body = {
+    name: document.getElementById("c-name").value,
+    template_text: document.getElementById("c-template").value,
+    followup_hours: parseInt(document.getElementById("c-hours").value) || 24,
+  };
+  const res = await fetch("/api/campaigns", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });
+  if (res.ok) location.reload(); else alert("Failed: " + await res.text());
+}
+async function enroll(id) {
+  const leadId = parseInt(document.getElementById("enroll-" + id).value);
+  const res = await fetch(`/api/campaigns/${id}/enroll`, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ lead_ids: [leadId] }) });
+  const data = await res.json();
+  alert("Enrolled " + data.enrolled + " lead(s)");
+  location.reload();
+}
+async function runNow(id) {
+  const res = await fetch(`/api/campaigns/${id}/run-now`, { method: "POST" });
+  const data = await res.json();
+  alert("Sent " + data.count + " follow-up(s)");
+  location.reload();
+}
+</script>
+{% endblock %}

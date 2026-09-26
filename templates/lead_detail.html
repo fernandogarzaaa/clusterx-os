@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} - {{ lead.name or "Lead" }}{% endblock %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<a href="/leads" class="text-sm text-orange-600 hover:underline">&larr; Back to leads</a>
+<div class="flex items-start justify-between mt-2 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold">{{ lead.name or lead.email }}</h1>
+    <div class="text-sm text-stone-500">{{ lead.company }} &middot; {{ lead.email }} &middot; {{ lead.phone }} &middot; source: {{ lead.source }}</div>
+  </div>
+  <div class="flex items-center gap-2">
+    {% if lead.intent %}
+    <span class="text-sm px-3 py-1 rounded-full
+      {% if lead.intent == 'Hot' %}bg-red-100 text-red-700{% elif lead.intent == 'Warm' %}bg-amber-100 text-amber-700{% elif lead.intent == 'Cold' %}bg-blue-100 text-blue-700{% else %}bg-stone-200 text-stone-600{% endif %}">
+      {{ lead.intent }}{% if lead.intent_confidence %} ({{ (lead.intent_confidence * 100)|round }}%){% endif %}
+    </span>
+    {% endif %}
+    <select id="stage-select" class="border rounded-lg px-3 py-1 text-sm">
+      {% for s in stages %}<option value="{{ s }}" {% if s == lead.stage %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+</div>
+<div class="grid grid-cols-3 gap-4">
+  <div class="col-span-2">
+    <div class="bg-white rounded-xl border border-stone-200 p-4 mb-4">
+      <h2 class="font-semibold mb-3">Conversation</h2>
+      <div class="space-y-2 max-h-96 overflow-y-auto mb-3" id="thread">
+        {% for m in messages %}
+        <div class="flex {% if m.role == 'agent' %}justify-start{% elif m.role == 'lead' %}justify-end{% else %}justify-center{% endif %}">
+          <div class="max-w-[75%] px-3 py-2 rounded-2xl text-sm
+            {% if m.role == 'agent' %}bg-stone-100 text-stone-900 rounded-tl-sm{% elif m.role == 'lead' %}bg-orange-600 text-white rounded-tr-sm{% else %}bg-stone-50 text-stone-500 text-xs{% endif %}">
+            {{ m.text }}
+            <div class="text-[10px] opacity-60 mt-1">{{ m.channel }}</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="text-sm text-stone-400">No messages yet. Send the first one below to start the qualification agent.</div>
+        {% endfor %}
+      </div>
+      <div class="flex gap-2">
+        <input id="msg-text" class="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder="Type as the lead (simulator)...">
+        <button onclick="sendMsg()" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">Send</button>
+      </div>
+    </div>
+    {% if appointments %}
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <h2 class="font-semibold mb-3">Appointments</h2>
+      {% for a in appointments %}
+      <div class="flex justify-between items-center py-2 border-b border-stone-100 text-sm">
+        <span>{{ a.title }} &middot; {{ a.starts_at.strftime("%Y-%m-%d %H:%M") }} UTC</span>
+        <a href="/api/appointments/{{ a.id }}/ics" class="text-orange-600 hover:underline">ICS</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <div>
+    <div class="bg-white rounded-xl border border-stone-200 p-4 mb-4">
+      <h2 class="font-semibold mb-3">Intent signals</h2>
+      {% if reasons %}
+      <ul class="text-sm space-y-1 list-disc pl-5">
+        {% for r in reasons %}<li>{{ r }}</li>{% endfor %}
+      </ul>
+      {% else %}
+      <div class="text-sm text-stone-400">Not classified yet. The agent classifies intent as you chat.</div>
+      {% endif %}
+    </div>
+    <div class="bg-white rounded-xl border border-stone-200 p-4">
+      <h2 class="font-semibold mb-3">Timeline</h2>
+      <div class="space-y-2 text-sm">
+        {% for e in events %}
+        <div class="border-l-2 border-orange-200 pl-3">
+          <div class="font-medium">{{ e.kind.replace("_", " ") }}</div>
+          <div class="text-xs text-stone-500">{{ e.created_at.strftime("%Y-%m-%d %H:%M") if e.created_at else "" }} &middot; {{ e.detail_json }}</div>
+        </div>
+        {% else %}
+        <div class="text-stone-400">No events yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const LEAD_ID = {{ lead.id }};
+async function sendMsg() {
+  const el = document.getElementById("msg-text");
+  const text = el.value.trim();
+  if (!text) return;
+  el.value = "";
+  const res = await fetch(`/api/leads/${LEAD_ID}/messages`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ text })
+  });
+  if (res.ok) location.reload(); else alert("Failed: " + await res.text());
+}
+document.getElementById("msg-text").addEventListener("keydown", (e) => { if (e.key === "Enter") sendMsg(); });
+document.getElementById("stage-select").addEventListener("change", async (e) => {
+  const res = await fetch(`/api/leads/${LEAD_ID}/stage`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ stage: e.target.value })
+  });
+  if (res.ok) location.reload(); else alert("Failed: " + await res.text());
+});
+document.getElementById("thread").scrollTop = document.getElementById("thread").scrollHeight;
+</script>
+{% endblock %}

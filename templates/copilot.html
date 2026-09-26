@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} - Co-pilot{% endblock %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-2">Co-pilot</h1>
+<p class="text-sm text-stone-500 mb-6">Ask about your pipeline in plain language. Answers come straight from the database.</p>
+<div class="bg-white rounded-xl border border-stone-200 p-5 mb-4">
+  <div class="flex gap-2">
+    <input id="q" class="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder='e.g. "how many hot leads?" or "show leads from last week"'>
+    <button onclick="ask()" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">Ask</button>
+  </div>
+  <div class="flex flex-wrap gap-2 mt-3">
+    {% for s in ["how many hot leads?", "how many leads in Qualified?", "show leads from last week", "leads with no reply", "booked appointments this week", "intent breakdown"] %}
+    <button onclick="askPreset(this.textContent)" class="text-xs px-3 py-1 border border-stone-300 rounded-full hover:bg-stone-100">{{ s }}</button>
+    {% endfor %}
+  </div>
+</div>
+<div id="answer" class="bg-white rounded-xl border border-stone-200 p-5 hidden">
+  <div id="answer-text" class="font-medium mb-3"></div>
+  <div id="answer-rows" class="text-sm space-y-1"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function askPreset(q) { document.getElementById("q").value = q; ask(); }
+async function ask() {
+  const question = document.getElementById("q").value.trim();
+  if (!question) return;
+  const res = await fetch("/api/copilot", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ question }) });
+  const data = await res.json();
+  document.getElementById("answer").classList.remove("hidden");
+  document.getElementById("answer-text").textContent = data.answer;
+  const rows = document.getElementById("answer-rows");
+  rows.innerHTML = (data.rows || []).map(r =>
+    `<div class="border-b border-stone-100 py-1">${r.name || r.title || JSON.stringify(r)} <span class="text-stone-500">${r.company || r.starts_at || ""}</span></div>`
+  ).join("");
+}
+document.getElementById("q").addEventListener("keydown", (e) => { if (e.key === "Enter") ask(); });
+</script>
+{% endblock %}

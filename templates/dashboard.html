@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} - Outbound Dashboard{% endblock %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">Outbound Dashboard</h1>
+  <div class="flex gap-2 text-sm">
+    {% for r in ["24h", "7d", "30d"] %}
+    <a href="/?range={{ r }}" class="px-3 py-1 rounded-full border {% if range == r %}bg-orange-600 text-white border-orange-600{% else %}border-stone-300 text-stone-600{% endif %}">{{ r }}</a>
+    {% endfor %}
+  </div>
+</div>
+<div class="grid grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-xl border border-stone-200 p-5">
+    <div class="text-xs text-stone-500 uppercase">Total leads</div>
+    <div class="text-3xl font-bold" id="stat-total">-</div>
+  </div>
+  <div class="bg-white rounded-xl border border-stone-200 p-5">
+    <div class="text-xs text-stone-500 uppercase">Hot leads</div>
+    <div class="text-3xl font-bold text-red-600" id="stat-hot">-</div>
+  </div>
+  <div class="bg-white rounded-xl border border-stone-200 p-5">
+    <div class="text-xs text-stone-500 uppercase">Won</div>
+    <div class="text-3xl font-bold text-green-600" id="stat-won">-</div>
+  </div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+  <div class="bg-white rounded-xl border border-stone-200 p-5">
+    <h2 class="font-semibold mb-4">Call Intent</h2>
+    <div class="max-w-xs mx-auto"><canvas id="intentChart"></canvas></div>
+  </div>
+  <div class="bg-white rounded-xl border border-stone-200 p-5">
+    <h2 class="font-semibold mb-4">Outcomes</h2>
+    <div class="max-w-xs mx-auto"><canvas id="outcomeChart"></canvas></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function load() {
+  const res = await fetch("/api/dashboard/stats?range={{ range }}");
+  const data = await res.json();
+  document.getElementById("stat-total").textContent = data.total_leads;
+  document.getElementById("stat-hot").textContent = data.intent_counts.Hot || 0;
+  document.getElementById("stat-won").textContent = data.outcome_counts.Won || 0;
+  const palette = ["#dc2626", "#f59e0b", "#3b82f6", "#6b7280", "#d6d3d1"];
+  new Chart(document.getElementById("intentChart"), {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(data.intent_counts),
+      datasets: [{ data: Object.values(data.intent_counts), backgroundColor: palette }]
+    },
+    options: { plugins: { legend: { position: "bottom" } } }
+  });
+  new Chart(document.getElementById("outcomeChart"), {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(data.outcome_counts),
+      datasets: [{ data: Object.values(data.outcome_counts), backgroundColor: ["#16a34a", "#dc2626", "#f59e0b"] }]
+    },
+    options: { plugins: { legend: { position: "bottom" } } }
+  });
+}
+load();
+</script>
+{% endblock %}

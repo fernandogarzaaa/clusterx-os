@@ -1,0 +1,11 @@
+{% set links = [
+  ("/", "Dashboard"),
+  ("/leads", "Leads"),
+  ("/calendar", "Calendar"),
+  ("/campaigns", "Campaigns"),
+  ("/copilot", "Co-pilot"),
+  ("/channels", "Channels"),
+] %}
+{% for href, label in links %}
+<a href="{{ href }}" class="block px-3 py-2 rounded-md {% if request.url.path == href %}bg-orange-50 text-orange-700 font-medium{% else %}text-stone-700 hover:bg-stone-100{% endif %}">{{ label }}</a>
+{% endfor %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} - Leads{% endblock %}
+{% block nav %}{% include "_nav.html" %}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">Leads</h1>
+  <div class="flex gap-2">
+    <button onclick="document.getElementById('add-form').classList.toggle('hidden')" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">Add lead</button>
+    <label class="px-4 py-2 border border-stone-300 rounded-lg text-sm cursor-pointer bg-white">Import CSV
+      <input type="file" id="csv-file" accept=".csv" class="hidden">
+    </label>
+  </div>
+</div>
+<div id="add-form" class="hidden bg-white rounded-xl border border-stone-200 p-5 mb-6">
+  <h2 class="font-semibold mb-3">Add lead manually</h2>
+  <div class="grid grid-cols-2 gap-3">
+    <input id="f-name" class="border rounded-lg px-3 py-2" placeholder="Name">
+    <input id="f-company" class="border rounded-lg px-3 py-2" placeholder="Company">
+    <input id="f-email" class="border rounded-lg px-3 py-2" placeholder="Email">
+    <input id="f-phone" class="border rounded-lg px-3 py-2" placeholder="Phone">
+  </div>
+  <button onclick="addLead()" class="mt-3 px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">Save lead</button>
+</div>
+<div class="flex gap-4 overflow-x-auto pb-4">
+  {% for stage in stages %}
+  <div class="w-64 shrink-0">
+    <div class="font-semibold text-sm mb-2 flex justify-between"><span>{{ stage }}</span><span class="text-stone-400">{{ board[stage]|length }}</span></div>
+    <div class="space-y-2 min-h-24">
+      {% for lead in board[stage] %}
+      <a href="/leads/{{ lead.id }}" class="block bg-white rounded-xl border border-stone-200 p-3 hover:shadow">
+        <div class="font-medium text-sm">{{ lead.name or lead.email or "Lead" }}</div>
+        <div class="text-xs text-stone-500">{{ lead.company }}</div>
+        {% if lead.intent %}
+        <span class="inline-block mt-1 text-xs px-2 py-0.5 rounded-full
+          {% if lead.intent == 'Hot' %}bg-red-100 text-red-700{% elif lead.intent == 'Warm' %}bg-amber-100 text-amber-700{% elif lead.intent == 'Cold' %}bg-blue-100 text-blue-700{% else %}bg-stone-200 text-stone-600{% endif %}">
+          {{ lead.intent }}{% if lead.intent_confidence %} {{ (lead.intent_confidence * 100)|round }}%{% endif %}
+        </span>
+        {% endif %}
+        <div class="text-xs text-stone-400 mt-1">{{ lead.source }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function addLead() {
+  const body = {
+    name: document.getElementById("f-name").value,
+    company: document.getElementById("f-company").value,
+    email: document.getElementById("f-email").value,
+    phone: document.getElementById("f-phone").value,
+  };
+  const res = await fetch("/api/leads", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });
+  if (res.ok) location.reload(); else alert("Failed: " + await res.text());
+}
+document.getElementById("csv-file").addEventListener("change", async (e) => {
+  const fd = new FormData();
+  fd.append("file", e.target.files[0]);
+  const res = await fetch("/api/leads/import-csv", { method: "POST", body: fd });
+  const data = await res.json();
+  alert("Imported " + data.imported + " leads");
+  location.reload();
+});
+</script>
+{% endblock %}
