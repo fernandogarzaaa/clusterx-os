@@ -11,6 +11,18 @@ docker compose up --build
 # login: admin@clusterx.local / ChangeMe123!
 ```
 
+## Live demo
+
+**One-click cloud demo (no local setup):** open this repo in GitHub Codespaces
+(`Code` -> `Codespaces` -> `Create codespace on main`). The dev container boots
+the app + Postgres via docker compose, seeds demo data on first start, and
+forwards the app port automatically. Log in with `admin@clusterx.local` /
+`ChangeMe123!`.
+
+For a 24/7 public demo, deploy `docker-compose.yml` to any host that runs
+Docker (a VPS, Railway, Render, or Fly.io) and point your domain at the app
+port.
+
 Local dev (SQLite):
 
 ```bash
