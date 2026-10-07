@@ -139,6 +139,10 @@ def test_copilot_appointments_and_unknown():
 def _next_monday_10am():
     now = _now()
     days_ahead = (7 - now.weekday()) % 7 or 7
+    # The seed books a demo appointment for tomorrow 10:00; when today is
+    # Sunday that is next Monday 10:00, so skip a week to avoid the clash.
+    if days_ahead < 2:
+        days_ahead += 7
     return (now + timedelta(days=days_ahead)).replace(
         hour=10, minute=0, second=0, microsecond=0)
 
