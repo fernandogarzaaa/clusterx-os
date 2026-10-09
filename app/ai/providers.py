@@ -11,12 +11,17 @@ It enhances (not replaces) local results.
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 from typing import Protocol
+
+import httpx
 
 import numpy as np
 
 EMBED_DIM = 256
+
+logger = logging.getLogger(__name__)
 
 
 class AIProvider(Protocol):
@@ -87,8 +92,6 @@ class OpenAICompatibleProvider:
     def __init__(
         self, base_url: str, api_key: str, chat_model: str, embed_model: str
     ) -> None:
-        import httpx
-
         self._http = httpx
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
@@ -109,7 +112,8 @@ class OpenAICompatibleProvider:
             )
             r.raise_for_status()
             return r.json()["choices"][0]["message"]["content"].strip()
-        except Exception:
+        except (httpx.HTTPError, KeyError, IndexError, ValueError, TypeError) as exc:
+            logger.warning("remote chat provider failed, falling back to local: %s", exc)
             return self._local.chat(messages)
 
     def embed(self, texts: list[str]) -> list[list[float]]:
@@ -122,7 +126,8 @@ class OpenAICompatibleProvider:
             )
             r.raise_for_status()
             return [d["embedding"] for d in r.json()["data"]]
-        except Exception:
+        except (httpx.HTTPError, KeyError, IndexError, ValueError, TypeError) as exc:
+            logger.warning("remote embedding provider failed, falling back to local: %s", exc)
             return self._local.embed(texts)
 
     def summarize(self, text: str, max_sentences: int = 3) -> str:

@@ -407,7 +407,7 @@ def api_slots(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    day = datetime.strptime(date, "%Y-%m-%d").date()
+    day = datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
     return {"date": date, "slots": calendar_util.free_slots(day, db)}
 
 

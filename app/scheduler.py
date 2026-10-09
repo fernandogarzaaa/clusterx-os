@@ -8,15 +8,20 @@ it directly. The APScheduler job below only runs when RUN_SCHEDULER=1.
 
 from __future__ import annotations
 
+import json
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app import models
 from app.channels import get_adapter
 
 DEFAULT_CHANNEL = os.getenv("OUTBOUND_CHANNEL", "simulator")
+
+logger = logging.getLogger(__name__)
 
 
 def _now() -> datetime:
@@ -93,9 +98,8 @@ def run_due_followups(
                 models.Event(
                     lead_id=lead.id,
                     kind="followup_sent",
-                    detail_json=(
-                        '{"campaign_id": %d, "channel": "%s"}'
-                        % (campaign.id, adapter.name)
+                    detail_json=json.dumps(
+                        {"campaign_id": campaign.id, "channel": adapter.name}
                     ),
                 )
             )
@@ -116,8 +120,11 @@ def start_scheduler():
         db = SessionLocal()
         try:
             run_due_followups(db)
-        except Exception:
+        except SQLAlchemyError as exc:
+            # Roll back the failed transaction; non-DB errors propagate to
+            # APScheduler, which logs them and keeps the 60s schedule alive.
             db.rollback()
+            logger.warning("scheduler tick failed; transaction rolled back: %s", exc)
         finally:
             db.close()
 
