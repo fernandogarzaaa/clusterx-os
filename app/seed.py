@@ -1,5 +1,9 @@
 """Seed runner. `python -m app.seed` creates the admin user and product demo data."""
 
+import logging
+
+from sqlalchemy.exc import SQLAlchemyError
+
 from app import models
 from app.core.config import settings
 from app.core.db import SessionLocal, init_db
@@ -37,6 +41,9 @@ def run_seed() -> dict:
         db.close()
 
 
+logger = logging.getLogger(__name__)
+
+
 def maybe_seed_on_startup() -> None:
     if settings.SEED_ON_STARTUP:
         run_seed()
@@ -49,8 +56,8 @@ def maybe_seed_on_startup() -> None:
     finally:
         try:
             db.close()
-        except Exception:
-            pass
+        except SQLAlchemyError as exc:
+            logger.warning("ignoring db.close() error during seed: %s", exc)
 
 
 if __name__ == "__main__":

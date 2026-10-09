@@ -1,0 +1,8 @@
+# B008 (function call in argument defaults) is a false positive for FastAPI's
+# Depends() dependency-injection pattern: FastAPI inspects the default value at
+# route-registration time and never calls it per-request. The files below are
+# FastAPI route/dependency modules, so B008 is ignored only for them.
+[per-file-ignores]
+"app/auth.py" = ["B008"]
+"app/core/deps.py" = ["B008"]
+"app/product.py" = ["B008"]

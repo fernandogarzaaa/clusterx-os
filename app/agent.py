@@ -13,8 +13,11 @@ Two response paths:
 from __future__ import annotations
 
 import json
+import logging
 import re
 from dataclasses import dataclass, field
+
+logger = logging.getLogger(__name__)
 
 STAGES = ["greet", "needs", "budget", "timeline", "intent", "book", "handoff"]
 KANBAN_STAGES = ["New", "Contacted", "Qualified", "Booked", "Won", "Lost"]
@@ -267,7 +270,8 @@ def _llm_reply(provider, slots: dict, target: str, history: list[str]) -> str | 
         data = json.loads(raw.strip().strip("`"))
         reply = str(data.get("reply", "")).strip()
         return reply or None
-    except Exception:
+    except (ValueError, AttributeError, KeyError, TypeError) as exc:
+        logger.warning("agent reply parse failed, returning None: %s", exc)
         return None
 
 
