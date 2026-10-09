@@ -16,7 +16,6 @@ import re
 from typing import Protocol
 
 import httpx
-
 import numpy as np
 
 EMBED_DIM = 256
