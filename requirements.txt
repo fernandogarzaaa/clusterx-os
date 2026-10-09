@@ -15,4 +15,4 @@ httpx==0.28.1
 apscheduler==3.11.3
 psycopg2-binary==2.9.13
 pytest==9.0.3
-ruff==0.14.4
+ruff==0.16.10
