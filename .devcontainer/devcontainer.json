@@ -1,0 +1,18 @@
+{
+  "name": "clusterx-os",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "api",
+  "workspaceFolder": "/srv/app",
+  "forwardPorts": [
+    "8005"
+  ],
+  "portsAttributes": {
+    "8005": {
+      "label": "clusterx-os",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postCreateCommand": "echo 'Codespace ready: the app auto-seeds on first boot.'"
+}
