@@ -13,6 +13,6 @@ reportlab==4.4.4
 python-multipart==0.0.32
 httpx==0.28.1
 apscheduler==3.11.3
-psycopg2-binary==2.9.11
+psycopg2-binary==2.9.13
 pytest==9.0.3
 ruff==0.14.4
