@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /srv/app
 
-COPY pyproject.toml .
+COPY pyproject.toml README.md LICENSE ./
 COPY clusterx_os ./clusterx_os
 RUN pip install --no-cache-dir .
 
