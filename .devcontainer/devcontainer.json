@@ -1,18 +1,10 @@
 {
   "name": "clusterx-os",
-  "dockerComposeFile": [
-    "../docker-compose.yml"
-  ],
-  "service": "api",
-  "workspaceFolder": "/srv/app",
-  "forwardPorts": [
-    "8005"
-  ],
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "forwardPorts": [8005],
   "portsAttributes": {
-    "8005": {
-      "label": "clusterx-os",
-      "onAutoForward": "openPreview"
-    }
+    "8005": { "label": "clusterx-os", "onAutoForward": "openPreview" }
   },
-  "postCreateCommand": "echo 'Codespace ready: the app auto-seeds on first boot.'"
+  "postCreateCommand": "pip install -e '.[dev]' && clusterx-os migrate && clusterx-os seed-demo",
+  "postStartCommand": "nohup clusterx-os serve --port 8005 > /tmp/clusterx.log 2>&1 &"
 }

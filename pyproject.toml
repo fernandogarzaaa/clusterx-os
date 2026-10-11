@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Fernando Garza", email = "fernandogarzaaa@gmail.com" }]
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 keywords = ["lead qualification", "crm", "ai agent", "hubspot", "cal.com", "google calendar", "fastapi"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -18,7 +18,9 @@ classifiers = [
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Office/Business",
   "Typing :: Typed",
 ]
@@ -71,7 +73,7 @@ filterwarnings = ["ignore:Using `httpx` with `starlette.testclient`"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py311"
 extend-exclude = ["clusterx_os/migrations/versions"]
 
 [tool.ruff.lint]

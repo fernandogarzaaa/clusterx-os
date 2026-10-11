@@ -1,5 +1,6 @@
 # Production-style stack: Postgres + API + background worker.
-#   cp .env.example .env   # then set SECRET_KEY, WEBHOOK_API_KEY, ADMIN_PASSWORD
+#   cp .env.example .env   # optional in development; set SECRET_KEY, WEBHOOK_API_KEY,
+#                          # ADMIN_PASSWORD and APP_ENV=production for real use
 #   docker compose up -d --build
 services:
   db:
@@ -20,7 +21,9 @@ services:
   migrate:
     build: .
     command: ["clusterx-os", "migrate"]
-    env_file: [.env]
+    env_file:
+      - path: .env
+        required: false
     environment:
       DATABASE_URL: postgresql+psycopg2://clusterx:${POSTGRES_PASSWORD:-clusterx}@db:5432/clusterx
     depends_on:
@@ -32,7 +35,9 @@ services:
     build: .
     ports:
       - "${PORT:-8005}:8005"
-    env_file: [.env]
+    env_file:
+      - path: .env
+        required: false
     environment:
       PORT: "8005"
       AUTO_MIGRATE: "0"
@@ -46,7 +51,9 @@ services:
   worker:
     build: .
     command: ["clusterx-os", "worker"]
-    env_file: [.env]
+    env_file:
+      - path: .env
+        required: false
     environment:
       AUTO_MIGRATE: "0"
       DATABASE_URL: postgresql+psycopg2://clusterx:${POSTGRES_PASSWORD:-clusterx}@db:5432/clusterx
