@@ -45,7 +45,7 @@ def tick(settings: Settings | None = None, crm: CRMAdapter | None = None) -> dic
         db = SessionLocal()
         try:
             report[name] = job(db)
-        except Exception:  # noqa: BLE001 - keep the worker alive
+        except Exception:
             db.rollback()
             report[name] = "error"
             logger.exception("worker job failed", extra={"job": name})

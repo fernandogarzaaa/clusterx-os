@@ -82,7 +82,7 @@ def api_slots(date: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
               integrations: Integrations = Depends(integrations_dep),
               _user: User = Depends(current_user)) -> dict[str, Any]:
     try:
-        day = datetime.strptime(date, "%Y-%m-%d").date()  # noqa: DTZ007 - a calendar date
+        day = datetime.strptime(date, "%Y-%m-%d").date()
     except ValueError as exc:
         raise HTTPException(status_code=422, detail="Invalid date") from exc
     try:

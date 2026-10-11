@@ -265,7 +265,8 @@ def handle_inbound(
         if lead.intent in ("Hot", "Unqualified"):
             reasons_text = ", ".join(json.loads(lead.intent_reasons_json or "[]"))
             outbox.enqueue_crm_note(
-                db, settings, lead, f"ClusterX OS classified intent as {lead.intent}: {reasons_text}")
+                db, settings, lead,
+                f"ClusterX OS classified intent as {lead.intent}: {reasons_text}")
 
     msg = deliver(db, settings, lead, reply, channel, adapters)
     log_event(db, lead.id, "agent_replied",

@@ -25,7 +25,7 @@ from clusterx_os.integrations import ConfigurationError, IntegrationError, send
 
 Interval = tuple[datetime, datetime]
 
-GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"  # noqa: S105 - a URL
 GOOGLE_API = "https://www.googleapis.com/calendar/v3"
 CALCOM_BOOKINGS_VERSION = "2026-02-25"
 CALCOM_SLOTS_VERSION = "2024-09-04"

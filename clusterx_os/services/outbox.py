@@ -113,7 +113,7 @@ def process_outbox(db: Session, settings: Settings, crm: CRMAdapter | None,
         except SQLAlchemyError:
             db.rollback()
             raise
-        except Exception as exc:  # noqa: BLE001 - one bad job must not stop the queue
+        except Exception as exc:
             retryable = not isinstance(exc, ConfigurationError) and (
                 not isinstance(exc, IntegrationError) or exc.retryable
             )

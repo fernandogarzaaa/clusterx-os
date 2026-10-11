@@ -77,7 +77,9 @@ def answer_question(db: Session, question: str, now: datetime | None = None) -> 
     if re.search(r"\bhow many leads\b|\btotal leads\b|\blead count\b", q):
         n = _count(db)
         parts = [f"{s}: {c}" for s in KANBAN_STAGES if (c := _count(db, Lead.stage == s))]
-        answer = f"There are {n} leads total." + (f" By stage: {', '.join(parts)}." if parts else "")
+        answer = f"There are {n} leads total."
+        if parts:
+            answer += f" By stage: {', '.join(parts)}."
         return {"answer": answer, "rows": []}
 
     m = re.search(r"(?:show|list|which) leads (?:from|created|added)?\s*"
