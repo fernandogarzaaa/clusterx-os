@@ -1,33 +1,61 @@
+# Production-style stack: Postgres + API + background worker.
+#   cp .env.example .env   # then set SECRET_KEY, WEBHOOK_API_KEY, ADMIN_PASSWORD
+#   docker compose up -d --build
 services:
   db:
-    image: pgvector/pgvector:0.8.0-pg16
+    image: postgres:16-alpine
     environment:
       POSTGRES_USER: clusterx
-      POSTGRES_PASSWORD: clusterx
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clusterx}
       POSTGRES_DB: clusterx
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U clusterx"]
+      test: ["CMD-SHELL", "pg_isready -U clusterx -d clusterx"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    build: .
+    command: ["clusterx-os", "migrate"]
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://clusterx:${POSTGRES_PASSWORD:-clusterx}@db:5432/clusterx
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
 
   api:
     build: .
     ports:
-      - "${PORT:-8005}:${PORT:-8005}"
-    env_file:
-      - .env
+      - "${PORT:-8005}:8005"
+    env_file: [.env]
     environment:
-      DATABASE_URL: postgresql+psycopg2://clusterx:clusterx@db:5432/clusterx
-      PORT: ${PORT:-8005}
-      SEED_ON_STARTUP: "1"
-    volumes:
-      - ./data:/srv/app/data
+      PORT: "8005"
+      AUTO_MIGRATE: "0"
+      RUN_SCHEDULER: "0"
+      DATABASE_URL: postgresql+psycopg2://clusterx:${POSTGRES_PASSWORD:-clusterx}@db:5432/clusterx
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: ["clusterx-os", "worker"]
+    env_file: [.env]
+    environment:
+      AUTO_MIGRATE: "0"
+      DATABASE_URL: postgresql+psycopg2://clusterx:${POSTGRES_PASSWORD:-clusterx}@db:5432/clusterx
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      disable: true
+    restart: unless-stopped
 
 volumes:
   pgdata:

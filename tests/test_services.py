@@ -703,3 +703,24 @@ def test_config_validation() -> None:
     assert s.LOG_LEVEL == "DEBUG"
     assert s.cors_origins == ["https://a.example", "https://b.example"]
     assert Settings(BUSINESS_TIMEZONE="Asia/Manila").tz.key == "Asia/Manila"
+
+
+def test_env_example_parses_to_safe_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    import os
+    from pathlib import Path
+
+    for key in list(os.environ):
+        if key in Settings.model_fields:
+            monkeypatch.delenv(key)
+
+    from clusterx_os.config import DEFAULT_SECRET_KEY, DEFAULT_WEBHOOK_KEY
+
+    example = Path(__file__).resolve().parent.parent / ".env.example"
+    s = Settings(_env_file=str(example))
+    assert s.SECRET_KEY == DEFAULT_SECRET_KEY
+    assert s.WEBHOOK_API_KEY == DEFAULT_WEBHOOK_KEY
+    assert s.ADMIN_PASSWORD == DEFAULT_ADMIN_PASSWORD
+    assert s.APP_ENV == "development" and s.COOKIE_SECURE is False
+    assert s.CALCOM_EVENT_TYPE_ID == 0 and s.TWILIO_VALIDATE_SIGNATURE is True
+    prod = Settings(_env_file=str(example), APP_ENV="production")
+    assert len(prod.problems()) == 3
