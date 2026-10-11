@@ -1,0 +1,107 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clusterx-os"
+version = "1.0.0"
+description = "Agentic AI OS for lead qualification: engage leads, qualify intent, update CRM, and book appointments automatically."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Fernando Garza", email = "fernandogarzaaa@gmail.com" }]
+requires-python = ">=3.12"
+keywords = ["lead qualification", "crm", "ai agent", "hubspot", "cal.com", "google calendar", "fastapi"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Framework :: FastAPI",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Office/Business",
+  "Typing :: Typed",
+]
+dependencies = [
+  "alembic==1.20.0",
+  "bcrypt==5.0.0",
+  "email-validator==2.3.0",
+  "fastapi==0.142.2",
+  "httpx==0.28.1",
+  "jinja2==3.1.6",
+  "psycopg2-binary==2.9.13",
+  "pydantic==2.12.4",
+  "pydantic-settings==2.11.0",
+  "PyJWT==2.15.1",
+  "python-multipart==0.0.32",
+  "sqlalchemy==2.1.3",
+  "tzdata==2026.5",
+  "uvicorn[standard]==0.54.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "build==1.6.1",
+  "mypy==2.4.0",
+  "pytest==9.0.3",
+  "pytest-cov==7.1.0",
+  "ruff==0.16.10",
+  "testteeth==0.2.0",
+]
+
+[project.scripts]
+clusterx-os = "clusterx_os.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/fernandogarzaaa/clusterx-os"
+Issues = "https://github.com/fernandogarzaaa/clusterx-os/issues"
+Changelog = "https://github.com/fernandogarzaaa/clusterx-os/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["clusterx_os"]
+
+[tool.hatch.build.targets.sdist]
+include = ["clusterx_os", "tests", "README.md", "CHANGELOG.md", "LICENSE", "SECURITY.md",
+           ".env.example", "Dockerfile", "docker-compose.yml", "requirements.lock", "alembic.ini"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["clusterx_os/migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "BLE", "N", "SIM", "RUF", "A", "DTZ"]
+ignore = [
+  "B008",   # FastAPI Depends()/Query()/File() defaults are the DI pattern
+  "S101",   # asserts are fine in tests
+  "S104",   # binding 0.0.0.0 is intended inside containers
+  "DTZ001", "DTZ007",  # naive UTC datetimes are the storage convention (see models.py)
+  "RUF001", "RUF002", "RUF003",  # currency symbols in strings are intentional
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S105", "S106", "S108", "S311", "DTZ005", "DTZ011", "A002"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+packages = ["clusterx_os"]
+exclude = ["clusterx_os/migrations/"]
+
+[[tool.mypy.overrides]]
+module = ["clusterx_os.migrations.*"]
+ignore_errors = true
+
+[tool.coverage.run]
+source = ["clusterx_os"]
+omit = ["clusterx_os/migrations/*"]
+
+[tool.testteeth]
+paths = ["clusterx_os"]
+test_args = ["tests", "-x", "-q", "-p", "no:cacheprovider"]
+exclude = ["clusterx_os/migrations/*"]
