@@ -12,11 +12,26 @@ from clusterx_os import __version__
 
 
 def _serve(args: argparse.Namespace) -> int:
+    import os
+
     import uvicorn
 
-    from clusterx_os.config import get_settings
+    from clusterx_os.config import get_settings, reset_settings
+    from clusterx_os.logging_config import configure_logging
+    from clusterx_os.web.app import StartupError, startup
 
     settings = get_settings()
+    configure_logging(settings.LOG_LEVEL, settings.LOG_FORMAT)
+    # Migrate, bootstrap and seed once here, before uvicorn forks: with several
+    # workers each would otherwise race to create the schema on a fresh database.
+    try:
+        startup(settings)
+    except StartupError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    os.environ["AUTO_MIGRATE"] = "0"
+    os.environ["SEED_DEMO_DATA"] = "0"
+    reset_settings()
     uvicorn.run("clusterx_os.web.app:create_app", factory=True,
                 host=args.host or settings.HOST, port=args.port or settings.PORT,
                 workers=args.workers, proxy_headers=True,

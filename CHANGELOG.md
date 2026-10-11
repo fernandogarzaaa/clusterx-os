@@ -45,6 +45,8 @@ First stable release. The prototype `app/` package was rewritten as the installa
 - Python 3.11+ is required; dependencies are pinned.
 
 ### Fixed
+- `clusterx-os serve --workers N` validates config, migrates and bootstraps once in the parent
+  process, so workers no longer race to create the schema on a fresh database.
 - Calendar slot test no longer fails when CI runs on a Sunday.
 
 [Unreleased]: https://github.com/fernandogarzaaa/clusterx-os/compare/v1.0.0...HEAD
