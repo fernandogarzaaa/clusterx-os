@@ -414,3 +414,50 @@ def test_mock_llm_round_trip() -> None:
     assert r.used_llm is True
     assert r.intent is not None and r.intent[0] == "Hot"
     assert r.intent[2][0] == "llm: mock llm agreed with rule engine"
+
+
+# ------------------------------------------------- mutation-test hardening ---
+
+def test_budget_lakh_and_lakhs_scale_identically() -> None:
+    assert extract_budget("2 lakh") == extract_budget("2 lakhs") == "₹200,000"
+
+
+def test_budget_symbol_without_digits_is_ignored() -> None:
+    # The regex accepts a bare comma after a currency sign; that is not an amount.
+    assert extract_budget("$,") is None
+
+
+def test_intent_confidence_rounds_to_two_places() -> None:
+    label, conf, reasons = classify_intent(["pricing please, and a demo", "maybe"])
+    assert (label, conf) == ("Hot", 0.67)
+    assert reasons == ["mentioned 'pricing'", "mentioned 'demo'"]
+
+
+def _llm_result(response: dict[str, Any]) -> agent.AgentResult:
+    result = agent.AgentResult(reply="draft", intent=("Warm", 0.5, ["r1", "r2", "r3", "r4"]))
+    agent.apply_llm(FakeLLM(response), result, "needs", "hello", [])
+    return result
+
+
+def test_llm_reply_alone_marks_llm_used_and_is_capped() -> None:
+    result = _llm_result({"reply": "x" * (agent.MAX_REPLY_CHARS + 500)})
+    assert result.used_llm is True
+    assert result.reply == "x" * agent.MAX_REPLY_CHARS
+    assert result.intent == ("Warm", 0.5, ["r1", "r2", "r3", "r4"])
+
+
+def test_llm_intent_reason_and_confidence_are_bounded() -> None:
+    result = _llm_result({"intent": "Hot", "confidence": 0.66666, "reason": "y" * 300})
+    assert result.reply == "draft"
+    assert result.intent == ("Hot", 0.67, ["llm: " + "y" * 200, "r1", "r2", "r3"])
+
+
+def test_llm_slot_values_are_capped() -> None:
+    result = _llm_result({"slots": {"need": "n" * 300}})
+    assert result.slots["need"] == "n" * 120
+
+
+def test_intent_event_carries_confidence() -> None:
+    r = process_inbound(ConversationState("A", "New", {}), "we want a demo", [], NOW)
+    assert r.intent is not None
+    assert ("intent_classified", {"intent": r.intent[0], "confidence": r.intent[1]}) in r.events
