@@ -202,7 +202,7 @@ def test_configure_logging_modes() -> None:
     configure_logging("WARNING", "text")
     assert not isinstance(root.handlers[0].formatter, JsonFormatter)
     stream = io.StringIO()
-    root.handlers[0].stream = stream  # type: ignore[attr-defined]
+    root.handlers[0].stream = stream
     logging.getLogger("t").warning("visible")
     assert "visible" in stream.getvalue()
 

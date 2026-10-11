@@ -273,7 +273,7 @@ def test_handle_inbound_upstream_calendar_failure(db: Session, settings: Setting
                                   "intent_asked": True, "_agent_stage": "book"})
     db.commit()
     out = leads.handle_inbound(db, settings, lead, "monday 9am",
-                               calendar=FakeCalendar(fail_create=True),  # type: ignore[arg-type]
+                               calendar=FakeCalendar(fail_create=True),
                                now=datetime(2026, 10, 14, 8, 0))
     assert out.appointment is None
     assert "not available" in out.reply
@@ -517,7 +517,7 @@ def test_followup_missing_lead(db: Session, settings: Settings) -> None:
     def get(model: Any, ident: Any) -> Any:
         return None if model is Lead else real_get(model, ident)
 
-    db.get = get  # type: ignore[method-assign]
+    db.get = get  # type: ignore[method-assign,assignment]
     assert followups.run_due_followups(db, settings) == []
     db.refresh(enr)
     assert enr.status == "stopped"

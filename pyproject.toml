@@ -85,13 +85,13 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S105", "S106", "S108", "S311", "DTZ005", "DTZ011", "A002"]
+"tests/*" = ["E501", "S105", "S106", "S108", "S311", "DTZ005", "DTZ011", "A002"]
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
-packages = ["clusterx_os"]
+files = ["clusterx_os", "tests"]
 exclude = ["clusterx_os/migrations/"]
 
 [[tool.mypy.overrides]]

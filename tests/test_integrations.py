@@ -15,8 +15,15 @@ import httpx
 import pytest
 
 from clusterx_os.config import Settings
-from clusterx_os.integrations import ConfigurationError, IntegrationError, send
-from clusterx_os.integrations import calendars, channels, crm, llm
+from clusterx_os.integrations import (
+    ConfigurationError,
+    IntegrationError,
+    calendars,
+    channels,
+    crm,
+    llm,
+    send,
+)
 from clusterx_os.integrations.calendars import CalComCalendar, EventRequest, GoogleCalendar
 from clusterx_os.integrations.channels import TwilioAdapter, WhatsAppAdapter
 from clusterx_os.integrations.crm import HubSpotCRM, LeadSnapshot
@@ -550,7 +557,7 @@ def test_simulator_and_registry(settings: Settings) -> None:
 
 def test_twilio_signature_matches_reference() -> None:
     # Algorithm from Twilio's request-validation docs, computed independently here.
-    token = "12345"  # noqa: S105
+    token = "12345"
     url = "https://mycompany.com/myapp.php?foo=1&bar=2"
     params = {"CallSid": "CA1234567890ABCDE", "Caller": "+12349013030", "Digits": "1234",
               "From": "+12349013030", "To": "+18005551212"}

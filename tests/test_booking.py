@@ -253,12 +253,12 @@ def test_unique_index_blocks_double_booking(db: Session) -> None:
     db.flush()
     # bypass the overlap check to exercise the database guard
     original = booking.busy_intervals
-    booking.busy_intervals = lambda *a, **k: []  # type: ignore[assignment]
+    booking.busy_intervals = lambda *a, **k: []
     try:
         with pytest.raises(booking.BookingError, match="just booked"):
             booking.book(db, lead, datetime(2026, 10, 14, 9, 0), slot_minutes=30, now=NOW)
     finally:
-        booking.busy_intervals = original  # type: ignore[assignment]
+        booking.busy_intervals = original
     assert len(db.scalars(select(Appointment)).all()) == 1
 
 
