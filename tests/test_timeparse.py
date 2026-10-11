@@ -121,3 +121,38 @@ def test_requested_time_keeps_timezone() -> None:
     got = parse_requested_time("friday 2pm", now)
     assert got == datetime(2026, 10, 16, 14, 0, tzinfo=manila)
     assert got is not None and got.tzinfo == manila
+
+
+# Monday 12 Oct 2026; every weekday spelling maps to the right day of the week ahead.
+_MONDAY = date(2026, 10, 12)
+
+
+@pytest.mark.parametrize(
+    ("word", "offset"),
+    [
+        ("monday", 7), ("mon", 7), ("tuesday", 1), ("tue", 1), ("tues", 1),
+        ("wednesday", 2), ("wed", 2), ("thursday", 3), ("thu", 3), ("thur", 3),
+        ("thurs", 3), ("friday", 4), ("fri", 4), ("saturday", 5), ("sat", 5),
+        ("sunday", 6), ("sun", 6),
+    ],
+)
+def test_every_weekday_spelling(word: str, offset: int) -> None:
+    from datetime import timedelta
+
+    assert parse_day(f"see you {word}", _MONDAY) == _MONDAY + timedelta(days=offset)
+
+
+def test_invalid_iso_date_wins_over_other_day_words() -> None:
+    # An explicit but impossible date is rejected outright, not reinterpreted.
+    assert parse_day("2026-02-30 tomorrow", TODAY) is None
+
+
+def test_iso_clock_takes_precedence_over_other_clock_text() -> None:
+    assert parse_requested_time("2026-10-20 09:05", NOW) == datetime(
+        2026, 10, 20, 9, 5, tzinfo=UTC
+    )
+    # Hour 24 is not an ISO clock time; the parser must not crash on it.
+    assert parse_requested_time("2026-10-20 24:00", NOW) is None
+    assert parse_requested_time("2026-10-20 24:00 at 3pm", NOW) == datetime(
+        2026, 10, 20, 15, 0, tzinfo=UTC
+    )
