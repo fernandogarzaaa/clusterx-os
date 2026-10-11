@@ -156,3 +156,20 @@ def test_iso_clock_takes_precedence_over_other_clock_text() -> None:
     assert parse_requested_time("2026-10-20 24:00 at 3pm", NOW) == datetime(
         2026, 10, 20, 15, 0, tzinfo=UTC
     )
+
+
+@pytest.mark.parametrize(
+    ("word", "month"),
+    [
+        ("january", 1), ("jan", 1), ("february", 2), ("feb", 2), ("march", 3), ("mar", 3),
+        ("april", 4), ("apr", 4), ("may", 5), ("june", 6), ("jun", 6), ("july", 7),
+        ("jul", 7), ("august", 8), ("aug", 8), ("september", 9), ("sept", 9), ("sep", 9),
+        ("october", 10), ("oct", 10), ("november", 11), ("nov", 11), ("december", 12),
+        ("dec", 12),
+    ],
+)
+def test_every_month_spelling(word: str, month: int) -> None:
+    # 20th of each month, counted from 14 Oct 2026: later months stay in 2026.
+    expected_year = 2026 if month >= 10 else 2027
+    assert parse_day(f"{word} 20", TODAY) == date(expected_year, month, 20)
+    assert parse_day(f"20 {word}", TODAY) == date(expected_year, month, 20)
