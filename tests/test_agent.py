@@ -425,6 +425,7 @@ def test_budget_lakh_and_lakhs_scale_identically() -> None:
 def test_budget_symbol_without_digits_is_ignored() -> None:
     # The regex accepts a bare comma after a currency sign; that is not an amount.
     assert extract_budget("$,") is None
+    assert extract_budget("$,k") is None  # matches the pattern, but "" is not a number
 
 
 def test_intent_confidence_rounds_to_two_places() -> None:
@@ -440,9 +441,9 @@ def _llm_result(response: dict[str, Any]) -> agent.AgentResult:
 
 
 def test_llm_reply_alone_marks_llm_used_and_is_capped() -> None:
-    result = _llm_result({"reply": "x" * (agent.MAX_REPLY_CHARS + 500)})
+    result = _llm_result({"reply": "x" * 1500})
     assert result.used_llm is True
-    assert result.reply == "x" * agent.MAX_REPLY_CHARS
+    assert result.reply == "x" * 1000
     assert result.intent == ("Warm", 0.5, ["r1", "r2", "r3", "r4"])
 
 
@@ -461,3 +462,24 @@ def test_intent_event_carries_confidence() -> None:
     r = process_inbound(ConversationState("A", "New", {}), "we want a demo", [], NOW)
     assert r.intent is not None
     assert ("intent_classified", {"intent": r.intent[0], "confidence": r.intent[1]}) in r.events
+
+
+def test_llm_intent_without_rule_intent_defaults_confidence() -> None:
+    result = agent.AgentResult(reply="draft")
+    agent.apply_llm(FakeLLM({"intent": "Warm"}), result, "needs", "hello", [])
+    assert result.intent == ("Warm", 0.4, [])
+
+
+_READY = {"need": "n", "budget": "$1", "timeline": "q1", "intent_asked": True}
+
+
+def test_offer_slots_when_lead_agrees_on_entering_book() -> None:
+    r = process_inbound(ConversationState("A", "Qualified", {**_READY, "_agent_stage": "intent"}),
+                        "sure", [], NOW)
+    assert r.agent_stage == "book" and r.offer_slots is True
+
+
+def test_offer_slots_again_while_already_booking() -> None:
+    r = process_inbound(ConversationState("A", "Qualified", {**_READY, "_agent_stage": "book"}),
+                        "hmm", [], NOW)
+    assert r.agent_stage == "book" and r.offer_slots is True
