@@ -67,6 +67,7 @@ include = ["clusterx_os", "tests", "README.md", "CHANGELOG.md", "LICENSE", "SECU
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+filterwarnings = ["ignore:Using `httpx` with `starlette.testclient`"]
 
 [tool.ruff]
 line-length = 100

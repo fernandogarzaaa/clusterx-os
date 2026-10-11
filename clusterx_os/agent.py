@@ -33,7 +33,7 @@ _SCALE = {"k": 1e3, "thousand": 1e3, "lakh": 1e5, "lakhs": 1e5, "crore": 1e7, "c
           "million": 1e6, "m": 1e6, "mm": 1e6}
 _INR_SUFFIXES = ("lakh", "lakhs", "crore", "cr")
 _BUDGET_RE = re.compile(
-    r"(?:\u20b9|\$|\u20b1|rs\.?\s*|inr\s*|usd\s*|php\s*)([\d,]+(?:\.\d+)?)"
+    r"(?:[\u20b9$\u20b1]|\b(?:rs\.?|inr|usd|php))\s*([\d,]+(?:\.\d+)?)"
     r"\s*(k|thousand|lakhs|lakh|crore|cr|million|mm|m)?\b"
     r"|([\d,]+(?:\.\d+)?)\s*(k|thousand|lakhs|lakh|crore|cr|million|mm|m)\b",
     re.IGNORECASE,
@@ -57,6 +57,10 @@ _TIMELINE_RES = [
 ]
 _GREETING_ONLY_RE = re.compile(
     r"^(hi|hello|hey|yo|hiya|good\s+(morning|afternoon|evening)|namaste)\W*$", re.IGNORECASE
+)
+_LEADING_FILLER_RE = re.compile(
+    r"^(?:(?:hi|hello|hey|yo|hiya|ok|okay|so|well|actually|basically)\b[\s,!.]*)+",
+    re.IGNORECASE,
 )
 _NEED_PREFIX_RE = re.compile(
     r"^(?:(?:we|i)(?:'re|'m| are| am)?\s+)?(?:are\s+|am\s+)?"
@@ -167,8 +171,8 @@ def extract_need(text: str) -> str | None:
     cleaned = text.strip()
     if not cleaned or _GREETING_ONLY_RE.match(cleaned):
         return None
+    cleaned = _LEADING_FILLER_RE.sub("", cleaned)
     first = re.split(r"[.!?;\n]", cleaned, maxsplit=1)[0].strip()
-    first = re.sub(r"^(hi|hello|hey|yo|hiya)\b[,!.]?\s*", "", first, flags=re.IGNORECASE)
     first = _NEED_PREFIX_RE.sub("", first)
     first = first[:120].strip(" ,")
     return first or None

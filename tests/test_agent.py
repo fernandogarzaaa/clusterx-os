@@ -250,7 +250,7 @@ def test_time_in_early_stage_is_not_a_booking() -> None:
 
 
 def test_book_stage_offer_on_affirmation_only() -> None:
-    results, _ = _run(["We need a CRM", "$10k", "asap", "excel", "thanks for that"])
+    results, _ = _run(["We need a CRM", "$10k", "asap", "we use excel"])
     # reaching book for the first time without a yes: summary only, no slot offer
     assert results[-1].agent_stage == "book"
     assert results[-1].offer_slots is False

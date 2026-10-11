@@ -12,9 +12,12 @@ _WEEKDAYS = {
 }  # fmt: skip
 _MONTHS = {
     "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6, "jul": 7, "aug": 8,
-    "sep": 9, "sept": 9, "oct": 10, "nov": 11, "dec": 12,
+    "sep": 9, "oct": 10, "nov": 11, "dec": 12,
 }  # fmt: skip
-_MONTH_RE = r"\b(jan|feb|mar|apr|may|jun|jul|aug|sept|sep|oct|nov|dec)[a-z]*\.?"
+_MONTH_RE = (
+    r"\b(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug"
+    r"|september|sept|sep|october|oct|november|nov|december|dec)\b\.?"
+)
 
 _ISO_RE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})(?:[ t](\d{1,2}):(\d{2}))?")
 _AMPM_RE = re.compile(r"\b(\d{1,2})(?::([0-5]\d))?\s*(a\.?m\.?|p\.?m\.?)(?![a-z])")
@@ -88,10 +91,10 @@ def parse_day(text: str, today: date) -> date | None:
         return today
     m = _MONTH_DAY_RE.search(t)
     if m:
-        return _next_month_day(_MONTHS[m.group(1)], int(m.group(2)), today)
+        return _next_month_day(_MONTHS[m.group(1)[:3]], int(m.group(2)), today)
     m = _DAY_MONTH_RE.search(t)
     if m:
-        return _next_month_day(_MONTHS[m.group(2)], int(m.group(1)), today)
+        return _next_month_day(_MONTHS[m.group(2)[:3]], int(m.group(1)), today)
     m = _WEEKDAY_RE.search(t)
     if m:
         ahead = (_WEEKDAYS[m.group(1)] - today.weekday()) % 7 or 7
