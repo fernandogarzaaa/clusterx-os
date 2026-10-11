@@ -143,6 +143,7 @@ def test_user_admin(client: TestClient, auth: dict[str, str]) -> None:
 
 
 def test_lead_crud_and_validation(client: TestClient, auth: dict[str, str]) -> None:
+    client.cookies.clear()
     assert client.get("/api/leads").status_code == 401
     bad = client.post("/api/leads", headers=auth, json={"email": "not-an-email"})
     assert bad.status_code == 422
