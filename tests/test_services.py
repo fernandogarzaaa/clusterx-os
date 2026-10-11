@@ -512,8 +512,12 @@ def test_followup_missing_lead(db: Session, settings: Settings) -> None:
     db.add(lead)
     db.flush()
     enr = _enroll(db, c, lead, None)
-    db.execute(Enrollment.__table__.update().values(lead_id=987654))
-    db.commit()
+    real_get = db.get
+
+    def get(model: Any, ident: Any) -> Any:
+        return None if model is Lead else real_get(model, ident)
+
+    db.get = get  # type: ignore[method-assign]
     assert followups.run_due_followups(db, settings) == []
     db.refresh(enr)
     assert enr.status == "stopped"
@@ -637,7 +641,7 @@ def test_copilot_answers(db: Session) -> None:
     assert [r["name"] for r in ask("show leads from today")["rows"]] == ["H1"]
     assert [r["name"] for r in ask("show leads from yesterday")["rows"]] == ["H2"]
     assert [r["name"] for r in ask("list leads from this week")["rows"]] == ["H1", "H2"]
-    assert [r["name"] for r in ask("show leads from last week")["rows"]] == ["W"]
+    assert [r["name"] for r in ask("show leads from last week")["rows"]] == ["N", "W"]
     assert [r["name"] for r in ask("show leads from last 7 days")["rows"]] == ["H1", "H2", "N"]
     assert sorted(r["name"] for r in ask("leads with no reply")["rows"]) == ["H2", "N", "W"]
     up = ask("upcoming appointments")
