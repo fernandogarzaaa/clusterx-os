@@ -61,7 +61,8 @@ document.getElementById("csv-file").addEventListener("change", async (e) => {
   fd.append("file", e.target.files[0]);
   const res = await fetch("/api/leads/import-csv", { method: "POST", body: fd });
   const data = await res.json();
-  alert("Imported " + data.imported + " leads");
+  if (!res.ok) { alert("Import failed: " + (data.detail || res.status)); return; }
+  alert(`Imported ${data.imported} new, updated ${data.updated}` + (data.errors.length ? `, ${data.errors.length} rows skipped (line ${data.errors[0].line}: ${data.errors[0].error})` : ""));
   location.reload();
 });
 </script>

@@ -20,6 +20,20 @@
   </div>
   {% endfor %}
 </div>
+<div class="grid grid-cols-3 gap-4 mb-8">
+  {% for label, item in [("CRM", crm), ("Calendar", calendar)] %}
+  <div class="bg-white rounded-xl border border-stone-200 p-5">
+    <div class="text-xs text-stone-500 uppercase">{{ label }}</div>
+    <div class="font-semibold capitalize">{{ item.name }}{% if not item.configured %} <span class="text-xs text-red-600">(not configured)</span>{% endif %}</div>
+    <div class="text-sm text-stone-600">{{ item.detail }}</div>
+  </div>
+  {% endfor %}
+  <div class="bg-white rounded-xl border border-stone-200 p-5">
+    <div class="text-xs text-stone-500 uppercase">LLM</div>
+    <div class="font-semibold">{{ llm_provider }}</div>
+    <div class="text-sm text-stone-600">{% if llm_provider == "offline" %}Deterministic rule engine (no API key needed).{% elif llm_provider == "mock" %}Deterministic mock LLM (testing).{% else %}OpenAI-compatible endpoint; falls back to the rule engine on any error.{% endif %}</div>
+  </div>
+</div>
 <div class="bg-white rounded-xl border border-stone-200 p-5">
   <h2 class="font-semibold mb-3">Configuration guide</h2>
   <div class="text-sm space-y-3 text-stone-700">
@@ -37,7 +51,7 @@
     </div>
     <div>
       <div class="font-medium">Inbound webhook</div>
-      <div>External systems can create leads via <code class="bg-stone-100 px-1 rounded">POST /api/webhooks/leads</code> with header <code class="bg-stone-100 px-1 rounded">X-API-Key</code>. The key is <code class="bg-stone-100 px-1 rounded">WEBHOOK_API_KEY</code> (default <code class="bg-stone-100 px-1 rounded">dev-webhook-key</code>, change it in production).</div>
+      <div>External systems can create leads via <code class="bg-stone-100 px-1 rounded">POST /api/webhooks/leads</code> with header <code class="bg-stone-100 px-1 rounded">X-API-Key</code>. The key is <code class="bg-stone-100 px-1 rounded">WEBHOOK_API_KEY</code> (the app refuses to start in production with the default). Send an <code class="bg-stone-100 px-1 rounded">Idempotency-Key</code> header to make retries safe. Inbound replies: <code class="bg-stone-100 px-1 rounded">POST /api/webhooks/twilio</code> (signature-verified), <code class="bg-stone-100 px-1 rounded">/api/webhooks/whatsapp</code> (Meta-signed) and <code class="bg-stone-100 px-1 rounded">/api/webhooks/messages</code> (API key).</div>
     </div>
   </div>
 </div>

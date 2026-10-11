@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ app_name }} - Outbound Dashboard{% endblock %}
+{% block extra_head %}<script src="/static/chart.umd.min.js"></script>{% endblock %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
 <div class="flex items-center justify-between mb-6">

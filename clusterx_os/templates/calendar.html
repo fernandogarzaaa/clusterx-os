@@ -2,7 +2,8 @@
 {% block title %}{{ app_name }} - Calendar{% endblock %}
 {% block nav %}{% include "_nav.html" %}{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">Calendar</h1>
+<h1 class="text-2xl font-bold mb-1">Calendar</h1>
+<p class="text-sm text-stone-500 mb-6">Availability is in {{ business_tz }}; times are shown in that zone. Provider: {{ calendar.name }}{% if not calendar.configured %} (not configured){% endif %}.</p>
 <div class="grid grid-cols-2 gap-4">
   <div class="bg-white rounded-xl border border-stone-200 p-5">
     <h2 class="font-semibold mb-3">Availability</h2>
@@ -17,7 +18,7 @@
         <select id="book-lead" class="border rounded-lg px-3 py-2 text-sm">
           {% for l in leads %}<option value="{{ l.id }}">{{ l.name or l.email }} ({{ l.company }})</option>{% endfor %}
         </select>
-        <input id="book-time" class="border rounded-lg px-3 py-2 text-sm" placeholder="2026-09-28T10:00">
+        <input id="book-time" class="border rounded-lg px-3 py-2 text-sm" placeholder="2026-09-28T10:00Z (UTC)">
       </div>
       <button onclick="bookSlot()" class="mt-2 px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">Book appointment</button>
     </div>
@@ -53,10 +54,10 @@ async function loadSlots() {
   const box = document.getElementById("slots");
   if (!data.slots.length) { box.innerHTML = '<div class="text-stone-400">No free slots this day.</div>'; return; }
   box.innerHTML = data.slots.map(s =>
-    `<button onclick="pickSlot('${s.starts_at}')" class="block w-full text-left px-3 py-2 border border-stone-200 rounded-lg hover:bg-orange-50">${s.starts_at.slice(11,16)} - ${s.ends_at.slice(11,16)} UTC</button>`
+    `<button onclick="pickSlot('${s.starts_at}')" class="block w-full text-left px-3 py-2 border border-stone-200 rounded-lg hover:bg-orange-50">${s.label}</button>`
   ).join("");
 }
-function pickSlot(startsAt) { document.getElementById("book-time").value = startsAt.slice(0, 16); }
+function pickSlot(startsAt) { document.getElementById("book-time").value = startsAt; }
 async function bookSlot() {
   const body = { lead_id: parseInt(document.getElementById("book-lead").value), starts_at: document.getElementById("book-time").value };
   const res = await fetch("/api/appointments", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });

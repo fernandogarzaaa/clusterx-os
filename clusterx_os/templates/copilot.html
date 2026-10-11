@@ -10,7 +10,7 @@
     <button onclick="ask()" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">Ask</button>
   </div>
   <div class="flex flex-wrap gap-2 mt-3">
-    {% for s in ["how many hot leads?", "how many leads in Qualified?", "show leads from last week", "leads with no reply", "booked appointments this week", "intent breakdown"] %}
+    {% for s in ["how many hot leads?", "how many leads in Qualified?", "show leads from last week", "leads with no reply", "upcoming appointments", "intent breakdown", "conversion rate"] %}
     <button onclick="askPreset(this.textContent)" class="text-xs px-3 py-1 border border-stone-300 rounded-full hover:bg-stone-100">{{ s }}</button>
     {% endfor %}
   </div>
@@ -31,9 +31,16 @@ async function ask() {
   document.getElementById("answer").classList.remove("hidden");
   document.getElementById("answer-text").textContent = data.answer;
   const rows = document.getElementById("answer-rows");
-  rows.innerHTML = (data.rows || []).map(r =>
-    `<div class="border-b border-stone-100 py-1">${r.name || r.title || JSON.stringify(r)} <span class="text-stone-500">${r.company || r.starts_at || ""}</span></div>`
-  ).join("");
+  rows.replaceChildren(...(data.rows || []).map(r => {
+    const row = document.createElement("div");
+    row.className = "border-b border-stone-100 py-1";
+    row.textContent = (r.name || r.title || "") + " ";
+    const meta = document.createElement("span");
+    meta.className = "text-stone-500";
+    meta.textContent = r.company || r.starts_at || "";
+    row.appendChild(meta);
+    return row;
+  }));
 }
 document.getElementById("q").addEventListener("keydown", (e) => { if (e.key === "Enter") ask(); });
 </script>
