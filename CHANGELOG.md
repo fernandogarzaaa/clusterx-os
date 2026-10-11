@@ -47,6 +47,8 @@ First stable release. The prototype `app/` package was rewritten as the installa
 ### Fixed
 - `clusterx-os serve --workers N` validates config, migrates and bootstraps once in the parent
   process, so workers no longer race to create the schema on a fresh database.
+- SQLite: SQLAlchemy now controls transactions (driver autocommit + explicit `BEGIN`), so a
+  booking's SAVEPOINT no longer commits on release and a failed `commit_booking` really rolls back.
 - Calendar slot test no longer fails when CI runs on a Sunday.
 
 [Unreleased]: https://github.com/fernandogarzaaa/clusterx-os/compare/v1.0.0...HEAD
