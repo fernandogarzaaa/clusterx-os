@@ -52,6 +52,51 @@ def test_cli_check_config(capsys: pytest.CaptureFixture[str],
     assert "invalid configuration" in capsys.readouterr().err
 
 
+def test_cli_serve_migrates_once_before_forking(monkeypatch: pytest.MonkeyPatch) -> None:
+    import uvicorn
+
+    from clusterx_os.web import app as web_app
+
+    calls: list[str] = []
+    seen: dict[str, Any] = {}
+
+    def fake_startup(settings: Settings) -> None:
+        calls.append(f"startup migrate={settings.AUTO_MIGRATE}")
+
+    def fake_run(target: str, **kwargs: Any) -> None:
+        calls.append("run")
+        seen.update(kwargs, env_migrate=os.environ["AUTO_MIGRATE"],
+                    env_seed=os.environ["SEED_DEMO_DATA"])
+
+    monkeypatch.setenv("AUTO_MIGRATE", "1")
+    monkeypatch.setenv("SEED_DEMO_DATA", "1")
+    reset_settings()
+    monkeypatch.setattr(web_app, "startup", fake_startup)
+    monkeypatch.setattr(uvicorn, "run", fake_run)
+    assert cli.main(["serve", "--port", "9123", "--workers", "3"]) == 0
+    # Startup ran once in the parent; workers are told not to migrate or seed again.
+    assert calls == ["startup migrate=True", "run"]
+    assert seen["env_migrate"] == "0" and seen["env_seed"] == "0"
+    assert seen["port"] == 9123 and seen["workers"] == 3 and seen["factory"] is True
+    reset_settings()
+
+
+def test_cli_serve_refuses_bad_production_config(monkeypatch: pytest.MonkeyPatch,
+                                                 capsys: pytest.CaptureFixture[str]) -> None:
+    import uvicorn
+
+    def fail_run(*_a: Any, **_k: Any) -> None:
+        raise AssertionError("uvicorn must not start")
+
+    monkeypatch.setattr(uvicorn, "run", fail_run)
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("SECRET_KEY", "short")
+    reset_settings()
+    assert cli.main(["serve"]) == 1
+    assert "Refusing to start in production" in capsys.readouterr().err
+    reset_settings()
+
+
 def test_cli_create_user(db: Session, capsys: pytest.CaptureFixture[str]) -> None:
     assert cli.main(["create-user", "New@X.example", "--password", "short"]) == 2
     assert cli.main(["create-user", "New@X.example", "--password", "good-password-1",

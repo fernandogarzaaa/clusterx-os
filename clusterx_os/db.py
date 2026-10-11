@@ -24,10 +24,17 @@ def ensure_sqlite_dir(url: str) -> None:
 
 
 def _sqlite_pragmas(dbapi_conn: Any, _record: Any) -> None:
+    # Hand transaction control to SQLAlchemy (see _sqlite_begin): pysqlite's legacy
+    # mode never emits BEGIN before SAVEPOINT, so releasing a savepoint would commit.
+    dbapi_conn.isolation_level = None
     cur = dbapi_conn.cursor()
     cur.execute("PRAGMA foreign_keys=ON")
     cur.execute("PRAGMA journal_mode=WAL")
     cur.close()
+
+
+def _sqlite_begin(conn: Any) -> None:
+    conn.exec_driver_sql("BEGIN")
 
 
 @lru_cache(maxsize=1)
@@ -37,6 +44,7 @@ def get_engine() -> Engine:
         ensure_sqlite_dir(url)
         engine = create_engine(url, connect_args={"check_same_thread": False})
         event.listen(engine, "connect", _sqlite_pragmas)
+        event.listen(engine, "begin", _sqlite_begin)
         return engine
     return create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=10)
 

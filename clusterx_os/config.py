@@ -7,7 +7,7 @@ from functools import lru_cache
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import Field, field_validator
+from pydantic import Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_SECRET_KEY = "dev-insecure-secret-key-change-me-in-production"  # noqa: S105
@@ -92,6 +92,17 @@ class Settings(BaseSettings):
     WHATSAPP_VERIFY_TOKEN: str = ""
     WHATSAPP_APP_SECRET: str = ""
     WHATSAPP_API_VERSION: str = "v21.0"
+
+    @field_validator("SECRET_KEY", "WEBHOOK_API_KEY", "ADMIN_PASSWORD", mode="before")
+    @classmethod
+    def _blank_means_default(cls, value: object, info: ValidationInfo) -> object:
+        """An empty value (as in .env.example) means "not set": keep the documented default,
+        which production refuses to start with."""
+        if isinstance(value, str) and not value.strip():
+            defaults = {"SECRET_KEY": DEFAULT_SECRET_KEY, "WEBHOOK_API_KEY": DEFAULT_WEBHOOK_KEY,
+                        "ADMIN_PASSWORD": DEFAULT_ADMIN_PASSWORD}
+            return defaults[str(info.field_name)]
+        return value
 
     @field_validator("BUSINESS_TIMEZONE")
     @classmethod

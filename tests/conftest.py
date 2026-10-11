@@ -11,7 +11,8 @@ from typing import Any
 _TMP = Path(tempfile.mkdtemp(prefix="clusterx-test-"))
 os.environ.update({
     "APP_ENV": "test",
-    "DATABASE_URL": f"sqlite:///{_TMP / 'test.db'}",
+    # TEST_DATABASE_URL runs the suite against another database (CI uses Postgres 16).
+    "DATABASE_URL": os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{_TMP / 'test.db'}",
     "AUTO_MIGRATE": "0",
     "BCRYPT_ROUNDS": "4",
     "LOG_FORMAT": "text",

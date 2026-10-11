@@ -368,3 +368,76 @@ def test_calendar_ics_without_attendee_or_organizer(db: Session) -> None:
 def test_dates_are_naive_utc() -> None:
     assert NOW.tzinfo is None
     assert datetime(2026, 1, 1, tzinfo=UTC).tzinfo is UTC
+
+
+# ------------------------------------------------- mutation-test hardening ---
+
+def test_open_slots_excludes_booking_on_first_candidate(db: Session) -> None:
+    _window(db, 2, "09:00", "10:30")
+    booking.book(db, _lead(db), datetime(2026, 10, 14, 9, 0), slot_minutes=30, now=NOW)
+    db.commit()
+    slots = booking.open_slots(db, [WED], UTC_TZ, 30, now=NOW)
+    assert [s for s, _ in slots] == [datetime(2026, 10, 14, 9, 30), datetime(2026, 10, 14, 10, 0)]
+
+
+def test_next_open_slots_defaults_to_three(db: Session) -> None:
+    _window(db, 2, "09:00", "12:00")
+    assert len(booking.next_open_slots(db, UTC_TZ, 30, 1, now=NOW)) == 3
+
+
+def test_book_releases_its_savepoint(db: Session) -> None:
+    booking.book(db, _lead(db), datetime(2026, 10, 14, 9, 0), slot_minutes=30, now=NOW)
+    assert not db.in_nested_transaction()
+
+
+def test_commit_booking_failure_without_upstream_event(db: Session) -> None:
+    appt = booking.book(db, _lead(db), datetime(2026, 10, 14, 9, 0), slot_minutes=30, now=NOW)
+    appt.external_id = "orphan"  # no adapter: nothing to cancel upstream
+    real_commit = db.commit
+
+    def broken_commit() -> None:
+        raise RuntimeError("db down")
+
+    db.commit = broken_commit  # type: ignore[method-assign]
+    with pytest.raises(RuntimeError, match="db down"):
+        booking.commit_booking(db, appt, None)
+    db.commit = real_commit  # type: ignore[method-assign]
+    # The failed transaction was rolled back, so the session is usable again.
+    assert db.scalars(select(Appointment)).all() == []
+
+
+def test_commit_booking_failure_logs_failed_upstream_cancel(
+    db: Session, caplog: pytest.LogCaptureFixture
+) -> None:
+    cal = FakeCalendar(fail_cancel=True)
+    appt = booking.book(db, _lead(db), datetime(2026, 10, 14, 9, 0), slot_minutes=30,
+                        adapter=cal, now=NOW)
+
+    def broken_commit() -> None:
+        raise RuntimeError("db down")
+
+    db.commit = broken_commit  # type: ignore[method-assign]
+    with caplog.at_level("ERROR", logger="clusterx_os.booking"), \
+            pytest.raises(RuntimeError, match="db down"):
+        booking.commit_booking(db, appt, cal)
+    assert any("could not roll back upstream event" in r.getMessage() for r in caplog.records)
+
+
+def test_cancel_returns_the_appointment(db: Session) -> None:
+    appt = booking.book(db, _lead(db), datetime(2026, 10, 14, 9, 0), slot_minutes=30, now=NOW)
+    assert booking.cancel(db, appt) is appt
+    assert booking.cancel(db, appt) is appt  # already cancelled
+
+
+def test_fold_line_boundary() -> None:
+    assert booking.fold_line("X" * 76) == "X" * 75 + "\r\n X"
+
+
+def test_vevent_status_matches_each_appointment(db: Session) -> None:
+    lead = _lead(db)
+    a = booking.book(db, lead, datetime(2026, 10, 14, 9, 0), slot_minutes=30, now=NOW)
+    b = booking.book(db, lead, datetime(2026, 10, 14, 10, 0), slot_minutes=30, now=NOW)
+    booking.cancel(db, b)
+    body = booking.calendar_ics([a, b], now=NOW)
+    assert body.index("STATUS:CONFIRMED") < body.index(f"UID:{b.ics_uid}") \
+        < body.index("STATUS:CANCELLED")

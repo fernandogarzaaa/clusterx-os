@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from clusterx_os import copilot, idempotency, security
 from clusterx_os.config import DEFAULT_ADMIN_PASSWORD, Settings
+from clusterx_os.db import SessionLocal
 from clusterx_os.integrations import ConfigurationError, IntegrationError
 from clusterx_os.integrations.crm import LeadSnapshot
 from clusterx_os.models import (
@@ -559,6 +560,35 @@ def test_idempotency_purge(db: Session) -> None:
     assert idempotency.purge_expired(db, 24, now=now) == 0
 
 
+def test_idempotency_purge_uses_given_now_and_strict_cutoff(db: Session) -> None:
+    base = datetime(2020, 1, 1, 12, 0)
+    for key, age in (("edge", 24), ("older", 25)):
+        db.add(IdempotencyRecord(scope="s", key=key, request_hash="h", status_code=200,
+                                 response_json="{}", created_at=base - timedelta(hours=age)))
+    db.commit()
+    # Exactly ttl old is kept; only strictly older rows go. A clock other than `now`
+    # (e.g. the real time) would purge both.
+    assert idempotency.purge_expired(db, 24, now=base) == 1
+    db.close()
+    with SessionLocal() as fresh:  # the delete was committed, not just flushed
+        assert [r.key for r in fresh.scalars(select(IdempotencyRecord))] == ["edge"]
+
+
+def test_idempotency_purge_defaults_to_current_time(db: Session) -> None:
+    db.add(IdempotencyRecord(scope="s", key="stale", request_hash="h", status_code=200,
+                             response_json="{}", created_at=utcnow() - timedelta(hours=2)))
+    db.commit()
+    assert idempotency.purge_expired(db, 1) == 1
+
+
+def test_idempotency_store_conflict_leaves_session_usable(db: Session) -> None:
+    fp = idempotency.request_fingerprint({"a": 1})
+    assert idempotency.store(db, "s", "dup", fp, 201, {"id": 1}) is True
+    assert idempotency.store(db, "s", "dup", fp, 201, {"id": 2}) is False
+    # The failed insert was rolled back, so the same session keeps working.
+    assert idempotency.lookup(db, "s", "dup", fp) == idempotency.StoredResponse(201, {"id": 1})
+
+
 # ---------------------------------------------------------- rate limit ---
 
 def test_rate_limiter_window() -> None:
@@ -576,6 +606,17 @@ def test_rate_limiter_window() -> None:
     assert rl.hit("k", 1) == (True, 0)
     with pytest.raises(ValueError):
         rl.hit("k", 0)
+
+
+def test_rate_limiter_retry_after_tracks_oldest_hit() -> None:
+    t = [0.0]
+    rl = RateLimiter(clock=lambda: t[0])
+    assert rl.hit("k", 2, 60) == (True, 0)
+    t[0] = 30.0
+    assert rl.hit("k", 2, 60) == (True, 0)
+    t[0] = 40.0
+    # Oldest hit (t=0) leaves the window at t=60: 20s, plus one for rounding.
+    assert rl.hit("k", 2, 60) == (False, 21)
 
 
 # ------------------------------------------------------------ security ---
@@ -703,3 +744,24 @@ def test_config_validation() -> None:
     assert s.LOG_LEVEL == "DEBUG"
     assert s.cors_origins == ["https://a.example", "https://b.example"]
     assert Settings(BUSINESS_TIMEZONE="Asia/Manila").tz.key == "Asia/Manila"
+
+
+def test_env_example_parses_to_safe_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    import os
+    from pathlib import Path
+
+    for key in list(os.environ):
+        if key in Settings.model_fields:
+            monkeypatch.delenv(key)
+
+    from clusterx_os.config import DEFAULT_SECRET_KEY, DEFAULT_WEBHOOK_KEY
+
+    example = Path(__file__).resolve().parent.parent / ".env.example"
+    s = Settings(_env_file=str(example))
+    assert s.SECRET_KEY == DEFAULT_SECRET_KEY
+    assert s.WEBHOOK_API_KEY == DEFAULT_WEBHOOK_KEY
+    assert s.ADMIN_PASSWORD == DEFAULT_ADMIN_PASSWORD
+    assert s.APP_ENV == "development" and s.COOKIE_SECURE is False
+    assert s.CALCOM_EVENT_TYPE_ID == 0 and s.TWILIO_VALIDATE_SIGNATURE is True
+    prod = Settings(_env_file=str(example), APP_ENV="production")
+    assert len(prod.problems()) == 3
