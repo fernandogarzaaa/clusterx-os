@@ -6,14 +6,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /srv/app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml README.md LICENSE ./
+COPY clusterx_os ./clusterx_os
+RUN pip install --no-cache-dir .
 
-COPY app ./app
-COPY templates ./templates
-COPY static ./static
 RUN mkdir -p data/uploads
 
 EXPOSE 8005
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "uvicorn --factory clusterx_os.web.app:create_app --host 0.0.0.0 --port ${PORT}"]
