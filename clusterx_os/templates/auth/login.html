@@ -10,8 +10,8 @@
   <form method="post" action="/login" class="bg-white p-8 rounded-xl shadow w-96 space-y-4">
     <div class="text-2xl font-bold tracking-tight"><span class="text-orange-600">&#9632;</span> Sign in</div>
     {% if error %}<div class="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">Invalid email or password.</div>{% endif %}
-    <input name="email" type="email" required placeholder="Email" class="w-full border border-stone-300 rounded px-3 py-2">
-    <input name="password" type="password" required placeholder="Password" class="w-full border border-stone-300 rounded px-3 py-2">
+    <input name="email" type="email" aria-label="Email" autocomplete="username" required placeholder="Email" class="w-full border border-stone-300 rounded px-3 py-2">
+    <input name="password" type="password" aria-label="Password" autocomplete="current-password" required placeholder="Password" class="w-full border border-stone-300 rounded px-3 py-2">
     <button class="w-full bg-orange-600 text-white rounded px-3 py-2 font-medium hover:bg-orange-700">Sign in</button>
   </form>
 </body>

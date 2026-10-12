@@ -8,10 +8,10 @@
 </div>
 <div id="new-campaign" class="hidden bg-white rounded-xl border border-stone-200 p-5 mb-6">
   <h2 class="font-semibold mb-3">New follow-up campaign</h2>
-  <input id="c-name" class="w-full border rounded-lg px-3 py-2 mb-2 text-sm" placeholder="Campaign name">
-  <textarea id="c-template" class="w-full border rounded-lg px-3 py-2 mb-2 text-sm" rows="3" placeholder="Message template. Use {first_name}, {name} and {company}."></textarea>
+  <input id="c-name" aria-label="Campaign name" class="w-full border rounded-lg px-3 py-2 mb-2 text-sm" placeholder="Campaign name">
+  <textarea id="c-template" aria-label="Message template" class="w-full border rounded-lg px-3 py-2 mb-2 text-sm" rows="3" placeholder="Message template. Use {first_name}, {name} and {company}."></textarea>
   <div class="flex gap-2 items-center">
-    <label class="text-sm text-stone-500">Follow up after (hours)</label>
+    <label for="c-hours" class="text-sm text-stone-500">Follow up after (hours)</label>
     <input id="c-hours" type="number" value="24" min="1" class="border rounded-lg px-3 py-2 text-sm w-24">
     <button onclick="createCampaign()" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">Create</button>
   </div>
@@ -35,7 +35,7 @@
     {% endfor %}
   </div>
   <div class="flex gap-2">
-    <select id="enroll-{{ c.id }}" class="border rounded-lg px-3 py-1 text-sm">
+    <select id="enroll-{{ c.id }}" aria-label="Lead to enroll in {{ c.name }}" class="border rounded-lg px-3 py-1 text-sm">
       {% for l in leads %}<option value="{{ l.id }}">{{ l.name or l.email }}</option>{% endfor %}
     </select>
     <button onclick="enroll({{ c.id }})" class="px-3 py-1 border border-stone-300 rounded-lg text-sm">Enroll lead</button>

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clusterx-os"
-version = "1.0.0"
+version = "1.0.1"
 description = "Agentic AI OS for lead qualification: engage leads, qualify intent, update CRM, and book appointments automatically."
 readme = "README.md"
 license = "MIT"

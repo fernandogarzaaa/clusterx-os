@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-13
+
+### Fixed
+
+- Accessibility: every dashboard form control now has an accessible name (aria-label or a
+  `for`-linked label) on the leads, campaigns, calendar, copilot, lead-detail and login pages;
+  login fields carry `autocomplete` hints for password managers, and the new-lead email/phone
+  inputs use `type=email`/`type=tel` for the right mobile keyboards.
+
 ## [1.0.0] - 2026-10-11
 
 First stable release. The prototype `app/` package was rewritten as the installable
@@ -51,5 +60,6 @@ First stable release. The prototype `app/` package was rewritten as the installa
   booking's SAVEPOINT no longer commits on release and a failed `commit_booking` really rolls back.
 - Calendar slot test no longer fails when CI runs on a Sunday.
 
-[Unreleased]: https://github.com/fernandogarzaaa/clusterx-os/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/fernandogarzaaa/clusterx-os/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/fernandogarzaaa/clusterx-os/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/fernandogarzaaa/clusterx-os/releases/tag/v1.0.0
