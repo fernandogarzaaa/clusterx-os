@@ -15,7 +15,7 @@
       {{ lead.intent }}{% if lead.intent_confidence %} ({{ (lead.intent_confidence * 100)|round }}%){% endif %}
     </span>
     {% endif %}
-    <select id="stage-select" class="border rounded-lg px-3 py-1 text-sm">
+    <select id="stage-select" aria-label="Lead stage" class="border rounded-lg px-3 py-1 text-sm">
       {% for s in stages %}<option value="{{ s }}" {% if s == lead.stage %}selected{% endif %}>{{ s }}</option>{% endfor %}
     </select>
   </div>
@@ -38,7 +38,7 @@
         {% endfor %}
       </div>
       <div class="flex gap-2">
-        <input id="msg-text" class="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder="Type as the lead (simulator)...">
+        <input id="msg-text" aria-label="Message from the lead (simulator)" class="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder="Type as the lead (simulator)...">
         <button onclick="sendMsg()" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">Send</button>
       </div>
     </div>

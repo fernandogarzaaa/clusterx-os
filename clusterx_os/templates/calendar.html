@@ -8,17 +8,17 @@
   <div class="bg-white rounded-xl border border-stone-200 p-5">
     <h2 class="font-semibold mb-3">Availability</h2>
     <div class="flex gap-2 mb-3">
-      <input type="date" id="slot-date" value="{{ day }}" class="border rounded-lg px-3 py-2 text-sm">
+      <input type="date" id="slot-date" aria-label="Day to check" value="{{ day }}" class="border rounded-lg px-3 py-2 text-sm">
       <button onclick="loadSlots()" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">Check slots</button>
     </div>
     <div id="slots" class="space-y-2 text-sm"></div>
     <div class="mt-4 pt-4 border-t border-stone-200">
       <h3 class="font-medium text-sm mb-2">Book a slot</h3>
       <div class="grid grid-cols-2 gap-2">
-        <select id="book-lead" class="border rounded-lg px-3 py-2 text-sm">
+        <select id="book-lead" aria-label="Lead to book" class="border rounded-lg px-3 py-2 text-sm">
           {% for l in leads %}<option value="{{ l.id }}">{{ l.name or l.email }} ({{ l.company }})</option>{% endfor %}
         </select>
-        <input id="book-time" class="border rounded-lg px-3 py-2 text-sm" placeholder="2026-09-28T10:00Z (UTC)">
+        <input id="book-time" aria-label="Meeting start time (UTC)" class="border rounded-lg px-3 py-2 text-sm" placeholder="2026-09-28T10:00Z (UTC)">
       </div>
       <button onclick="bookSlot()" class="mt-2 px-4 py-2 bg-orange-600 text-white rounded-lg text-sm">Book appointment</button>
     </div>
