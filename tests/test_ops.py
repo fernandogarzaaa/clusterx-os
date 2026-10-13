@@ -258,3 +258,14 @@ def test_module_entrypoint() -> None:
                          text=True, env=env, check=False, timeout=60)
     assert out.returncode == 0
     assert out.stdout.strip() == f"clusterx-os {__version__}"
+
+
+def test_docker_image_does_not_trust_forwarded_headers_from_everyone() -> None:
+    """`--forwarded-allow-ips '*'` with a directly published port lets any client spoof
+    X-Forwarded-For and dodge the per-IP rate limits."""
+    from pathlib import Path
+
+    dockerfile = (Path(__file__).resolve().parents[1] / "Dockerfile").read_text()
+    cmd = [line for line in dockerfile.splitlines() if line.startswith("CMD")][-1]
+    assert "--forwarded-allow-ips '*'" not in cmd
+    assert "${FORWARDED_ALLOW_IPS:-127.0.0.1}" in cmd

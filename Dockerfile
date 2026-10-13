@@ -31,4 +31,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/healthz' % os.environ.get('PORT','8005'), timeout=4)"
 
 # `clusterx-os serve` runs migrations on startup (AUTO_MIGRATE=1 by default).
-CMD ["sh", "-c", "clusterx-os serve --host 0.0.0.0 --port ${PORT} --workers ${WEB_CONCURRENCY:-2} --forwarded-allow-ips '*'"]
+CMD ["sh", "-c", "clusterx-os serve --host 0.0.0.0 --port ${PORT} --workers ${WEB_CONCURRENCY:-2} --forwarded-allow-ips ${FORWARDED_ALLOW_IPS:-127.0.0.1}"]

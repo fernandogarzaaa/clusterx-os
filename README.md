@@ -137,8 +137,9 @@ Health endpoints: `/healthz` (liveness), `/readyz` (database reachable, 503 othe
    Twilio signatures behind a proxy).
 3. Run `clusterx-os migrate` once per release, then the API (`clusterx-os serve`, or the Docker
    image with `AUTO_MIGRATE=0`) and **one** `clusterx-os worker`.
-4. Terminate TLS at your proxy; the image runs `--forwarded-allow-ips '*'`, so only expose it
-   behind a trusted proxy.
+4. Terminate TLS at your proxy and set `FORWARDED_ALLOW_IPS` to the proxy's address/CIDR: the
+   image trusts `X-Forwarded-*` headers only from those peers (default `127.0.0.1`), so per-IP
+   rate limits and logs see the real client and spoofed headers from direct clients are ignored.
 
 The Docker image is multi-stage, runs as an unprivileged user (uid 10001), stores SQLite data in
 the `/data` volume and has a `HEALTHCHECK` on `/healthz`. `docker-compose.yml` is a working
