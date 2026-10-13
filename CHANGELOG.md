@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- The Docker image no longer trusts `X-Forwarded-For` from every peer (`--forwarded-allow-ips '*'`).
+  With the port published directly (as in `docker-compose.yml`), any client could send a fake
+  `X-Forwarded-For` per request and bypass the per-IP rate limits (login, webhooks, copilot). The
+  image now trusts `FORWARDED_ALLOW_IPS` (default `127.0.0.1`); set it to your reverse proxy's address.
+
 ## [1.0.1] - 2026-10-13
 
 ### Fixed
