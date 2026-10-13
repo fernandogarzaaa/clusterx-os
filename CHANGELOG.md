@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-13
+
 ### Security
 - The Docker image no longer trusts `X-Forwarded-For` from every peer (`--forwarded-allow-ips '*'`).
   With the port published directly (as in `docker-compose.yml`), any client could send a fake
