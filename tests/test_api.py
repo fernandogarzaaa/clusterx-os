@@ -24,7 +24,7 @@ def test_health_endpoints(client: TestClient) -> None:
     assert client.get("/healthz").json() == {"status": "ok"}
     assert client.get("/readyz").json() == {"status": "ok", "database": True}
     body = client.get("/api/health").json()
-    assert body == {"status": "ok", "app": "ClusterX OS", "version": "1.0.1", "database": True}
+    assert body == {"status": "ok", "app": "ClusterX OS", "version": "1.0.2", "database": True}
 
 
 def test_security_headers_and_request_id(client: TestClient) -> None:
@@ -50,7 +50,7 @@ def test_body_size_limit(client: TestClient, auth: dict[str, str]) -> None:
 
 
 def test_openapi_and_static(client: TestClient) -> None:
-    assert client.get("/api/openapi.json").json()["info"]["version"] == "1.0.1"
+    assert client.get("/api/openapi.json").json()["info"]["version"] == "1.0.2"
     assert client.get("/static/app.css").status_code == 200
     assert client.get("/static/chart.umd.min.js").status_code == 200
 

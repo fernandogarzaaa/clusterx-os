@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-13
+
 ### Security
 - The Docker image no longer trusts `X-Forwarded-For` from every peer (`--forwarded-allow-ips '*'`).
   With the port published directly (as in `docker-compose.yml`), any client could send a fake
@@ -66,6 +68,7 @@ First stable release. The prototype `app/` package was rewritten as the installa
   booking's SAVEPOINT no longer commits on release and a failed `commit_booking` really rolls back.
 - Calendar slot test no longer fails when CI runs on a Sunday.
 
-[Unreleased]: https://github.com/fernandogarzaaa/clusterx-os/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/fernandogarzaaa/clusterx-os/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/fernandogarzaaa/clusterx-os/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/fernandogarzaaa/clusterx-os/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/fernandogarzaaa/clusterx-os/releases/tag/v1.0.0
